@@ -37,13 +37,16 @@ for dirname in listdir(source_path):
 
             # reinhard
             out = normalizer_rd.transform(source)
+            out = cv.cvtColor(out, cv.COLOR_RGB2BGR)
             cv.imwrite(join(save_path, "reinhard", img), out)
 
             # macenko
             out = normalizer_mk.transform(source)
+            out = cv.cvtColor(out, cv.COLOR_RGB2BGR)
             cv.imwrite(join(save_path, "macenko", img), out)
 
             # vahadane
             Ws, Hs = normalizer_vd.stain_separate(source)
             out = normalizer_vd.SPCN(source, Ws, Hs, Wt, Ht)
+            out = cv.cvtColor(out, cv.COLOR_RGB2BGR)
             cv.imwrite(join(save_path, "vahadane", img), out)
