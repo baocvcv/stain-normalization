@@ -13,43 +13,37 @@ source_path = "/home/fred/Projects/srt-cancer-img/pair-data/"
 suffix = "frames/x40/"
 save_path = "/home/fred/Projects/srt-cancer-img/pair-data/output/"
 
+# normalizers
+normalizer_rd = stainNorm_Reinhard.Normalizer()
+normalizer_mk = stainNorm_Macenko.Normalizer()
+normalizer_vd = vahadane.vahadane()
+
 for dirname in listdir(source_path):
     if 'A06' in dirname:
         print("Processing directory ", dirname)
 
         imgs = [f for f in listdir(join(source_path, dirname, suffix))]
         
-        # load target img: use the first image in every directory as the first image
-        target_img_path = join(source_path, dirname.replace('A', 'H', 1), suffix, imgs[0].replace('A', 'H', 1))
-        target_img = stain_utils.read_image(target_img_path)
-        print("Target image selected as: ", target_img_path)
-
-        # normalizers
-        normalizer_rd = stainNorm_Reinhard.Normalizer()
-        normalizer_rd.fit(target_img)
-
-        normalizer_mk = stainNorm_Macenko.Normalizer()
-        normalizer_mk.fit(target_img)
-
-        normalizer_vd = vahadane.vahadane()
-        Wt, Ht = normalizer_vd.stain_separate(target_img)
-
-        print("Finished preparing source image...")
-
         for img in imgs[1:]:
-            I = stain_utils.read_image(join(source_path, dirname, suffix, img))
+            source = stain_utils.read_image(join(source_path, dirname, suffix, img))
+            target = stain_utils.read_image(join(source_path, dirname.replace('A', 'H', 1), suffix, img.replace('A', 'H', 1)))
 
             print("Processing image: ", img)
 
+            # load and fit target img 
+            normalizer_rd.fit(target)
+            normalizer_mk.fit(target)
+            Wt, Ht = normalizer_vd.stain_separate(target)
+
             # reinhard
-            out = normalizer_rd.transform(I)
+            out = normalizer_rd.transform(source)
             cv.imwrite(join(save_path, "reinhard", img), out)
 
             # macenko
-            out = normalizer_mk.transform(I)
+            out = normalizer_mk.transform(source)
             cv.imwrite(join(save_path, "macenko", img), out)
 
             # vahadane
-            Ws, Hs = normalizer_vd.stain_separate(I)
-            out = normalizer_vd.SPCN(I, Ws, Hs, Wt, Ht)
+            Ws, Hs = normalizer_vd.stain_separate(source)
+            out = normalizer_vd.SPCN(source, Ws, Hs, Wt, Ht)
             cv.imwrite(join(save_path, "vahadane", img), out)

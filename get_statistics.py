@@ -3,6 +3,7 @@ import stain_utils
 import numpy as np
 from scipy.stats import pearsonr
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 from os import listdir, mkdir
 from os.path import isfile, join, isdir
@@ -25,9 +26,10 @@ ground_path = "/home/fred/Projects/srt-cancer-img/pair-data/"
 suffix = "frames/x40/"
 
 methods = ['reinhard', 'macenko', 'vahadane']
+stats_pearson = {}
 for method in methods:
     imgs = [f for f in listdir(join(output_path, method)) if isfile(join(output_path, method, f))]
-    pearson = []
+    stats_pearson[method] = np.array([])
     for img in imgs:
         # print(join(output_path, method, img))
         output = stain_utils.read_image(join(output_path, method, img))
@@ -38,6 +40,11 @@ for method in methods:
 
         # pearson
         r = get_pearson_corr(output, ground)
-        pearson.append(r)
-    
-    print(np.average(pearson))
+        stats_pearson[method] = np.append(stats_pearson[method], r)
+
+    print(method, np.average(stats_pearson[method]))
+
+fig1, ax1 = plt.subplots()
+ax1.set_title("Comparision")
+ax1.boxplot([stats_pearson[methods[0]], stats_pearson[methods[1]], stats_pearson[methods[2]]], labels=methods)
+plt.show()
